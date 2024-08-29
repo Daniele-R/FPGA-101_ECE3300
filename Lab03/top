@@ -1,0 +1,52 @@
+module top(
+    input clk,
+    input reset,
+    input enable,
+    input select,
+    input [4:0] pace,
+    input SW,
+    output AN,
+    output [6:0] sseg
+    );
+
+    reg [31:0] counter_divider; 
+    reg slow_clk;
+    wire [3:0] count;
+
+    assign AN = SW;
+
+    always @(posedge clk or posedge reset)
+    begin
+        if(reset)
+        begin
+            counter_divider <= 32'd0;
+            slow_clk <= 1'b0;
+        end
+        else
+        begin
+            if(counter_divider >= (32'd100000000 >> pace))
+            begin
+            counter_divider <= 32'd0;
+            slow_clk <= ~slow_clk;
+            end
+            else
+            begin
+            counter_divider <= counter_divider + 1;
+            end
+        end
+    end
+
+    bcdcounter bcd (
+        .clk(slow_clk),
+        .reset(reset),
+        .enable(enable),
+        .select(select),
+        .out(count)
+    );
+
+    seg hexseg (
+        .hex(count),
+        .sseg(sseg)
+    );
+
+endmodule
